@@ -8,7 +8,6 @@
         <outputRelativeToContentRoot value="true" />
         <module name="spring-boot-angular" />
         <module name="spring-boot-angular-origin" />
-        <module name="spring-boot-angular" />
       </profile>
     </annotationProcessing>
   </component>
@@ -16,7 +15,6 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="spring-boot-angular" options="-parameters" />
       <module name="spring-boot-angular-origin" options="-parameters" />
-      <module name="spring-boot-angular" options="-parameters" />
     </option>
   </component>
 </project>
