@@ -15,64 +15,38 @@ export class D3TimelineChartComponent implements OnInit {
     var dateFormat = 'YYYY/MM/DD'
     var dateDispFormat = 'M月D日'
     var datetimeFormat = 'YYYY/MM/DD HH:mm:ss'
-    var category = ['睡眠', '朝ご飯']
+    var category = ['睡眠', '朝ご飯', '洗濯', 'テレビ', 'YouTube', 'ゲーム', '昼ごはん', 'ランニング', 'パソコン', '夜ご飯', 'お風呂']
     var datasets = [
       {
         date: moment('2020/08/11'),
         schedule: [
-          {
-            categoryNo: 0,
-            from: moment('2020/08/11 00:00:00'),
-            to: moment('2020/08/11 07:00:00')
-          },
-          {
-            categoryNo: 1,
-            from: moment('2020/08/11 07:00:00'),
-            to: moment('2020/08/11 08:00:00')
-          }
-        ]
-      },
-      {
-        date: moment('2020/08/12'),
-        schedule: [
-          {
-            categoryNo: 0,
-            from: moment('2020/08/12 00:00:00'),
-            to: moment('2020/08/12 07:00:00')
-          },
-        ]
-      },
-      {
-        date: moment('2020/08/13'),
-        schedule: [
-          {
-            categoryNo: 0,
-            from: moment('2020/08/13 00:00:00'),
-            to: moment('2020/08/13 07:00:00')
-          },
-        ]
-      },
-      {
-        date: moment('2020/08/14'),
-        schedule: [
-          {
-            categoryNo: 0,
-            from: moment('2020/08/14 00:00:00'),
-            to: moment('2020/08/14 07:00:00')
-          },
-        ]
-      },
-      {
-        date: moment('2020/08/15'),
-        schedule: [
-          {
-            categoryNo: 0,
-            from: moment('2020/08/15 00:00:00'),
-            to: moment('2020/08/15 07:00:00')
-          },
+          { categoryNo: 0, from: moment('2020/08/11 00:00:00'), to: moment('2020/08/11 07:00:00') },
+          { categoryNo: 1, from: moment('2020/08/11 07:30:00'), to: moment('2020/08/11 08:30:00') },
+          { categoryNo: 3, from: moment('2020/08/11 08:30:00'), to: moment('2020/08/11 10:00:00') },
+          { categoryNo: 5, from: moment('2020/08/11 10:30:00'), to: moment('2020/08/11 15:00:00') },
+          { categoryNo: 7, from: moment('2020/08/11 15:30:00'), to: moment('2020/08/11 16:30:00') },
+          { categoryNo: 11, from: moment('2020/08/11 18:00:00'), to: moment('2020/08/11 20:00:00') },
+          { categoryNo: 10, from: moment('2020/08/11 20:00:00'), to: moment('2020/08/11 21:30:00') },
+          { categoryNo: 12, from: moment('2020/08/11 21:30:00'), to: moment('2020/08/11 22:30:00') },
+          { categoryNo: 0, from: moment('2020/08/11 23:00:00'), to: moment('2020/08/12 00:00:00') },
         ]
       }
     ]
+    for (var i = 12; i < 16; i++) {
+      var schedule = []
+      var from = moment('2020/08/' + i + ' 00:00:00', datetimeFormat)
+      for (var j = 0; j < 5; j++) {
+        var f = moment(from)
+        var t = moment(from.add(Math.round(Math.random() * 500), 'minutes'))
+        if (t.date() > i) t.startOf('day')
+        schedule.push({ categoryNo: Math.round(Math.random() * 10), from: f, to: t })
+      }
+      datasets.push({
+        date: moment('2020/08/' + i),
+        schedule: schedule
+      })
+    }
+    console.info(datasets)
     var width = 900
     var height = 60
     var padding = {
@@ -85,8 +59,12 @@ export class D3TimelineChartComponent implements OnInit {
     var dragIconSize = 15
 
     var makeRoundTime = function (time) {
-      var roundMinutes = '0' + String(Math.round(time.minute() / 5) * 5)
-      return moment(time.format('YYYY/MM/DD HH:' + roundMinutes.slice(-2) + ':00:00'))
+      var roundMinutesStr = ('0' + String(Math.round(time.minute() / 5) * 5)).slice(-2)
+      if (roundMinutesStr === '60') {
+        roundMinutesStr = '00'
+        time.add(1, 'hours')
+      }
+      return moment(time.format('YYYY/MM/DD HH:' + roundMinutesStr.slice(-2) + ':00'))
     }
 
     datasets.forEach((dataset, index) => {
@@ -119,15 +97,17 @@ export class D3TimelineChartComponent implements OnInit {
         .enter()
         .append('g')
       var calcScheduleX = function (d) { return zoomedScale(d['from']) }
-      var calcScheduleWidth = function (d) { return zoomedScale(d['to']) - zoomedScale(d['from']) }
+      var calcScheduleWidth = function (d) {
+        return zoomedScale(d['to']) - zoomedScale(d['from'])
+      }
       var calcToDragIconX = function (d) { return zoomedScale(d['to']) - dragIconSize }
       var calcFromDragIconX = function (d) { return zoomedScale(d['from']) }
       var dragStart = function (d) {
         d3.event.sourceEvent.stopPropagation()
-        d3.select(this).classed('dragging', true)
+        d3.select(this.parentNode).select('rect').classed('dragging', true)
       }
       var dragEnd = function (d) {
-        d3.select(this).classed('dragging', false)
+        d3.select(this.parentNode).select('rect').classed('dragging', false)
         d['from'] = makeRoundTime(d['from'])
         d['to'] = makeRoundTime(d['to'])
         d3.select(this.parentNode)
@@ -167,7 +147,7 @@ export class D3TimelineChartComponent implements OnInit {
         .attr('y', chartCenterY - barHeight / 2)
         .attr('width', calcScheduleWidth)
         .attr('height', barHeight)
-        .attr('fill', function (d) { return d3.schemeCategory10[d.categoryNo] })
+        .attr('fill', function (d) { return d3.schemeCategory10[d.categoryNo % 10] })
         .style('mix-blend-mode', 'multiply')
         .style('cursor', 'move')
         .call(scheduleDrag)
